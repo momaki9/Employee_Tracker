@@ -11,19 +11,16 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// see folder 11 under mySQL
+// see folder 11 
 // Connect to database
 const db = mysql.createConnection(
     {
       host: 'localhost',
-      // MySQL username,
       user: 'root',
-      // MySQL password
       password: 'R0JmN1mf3l',
-      database: 'registrar_db'
+      database: 'employee_db'
     },
-    // I think here
-    console.log(`Connected to the registrar_db database.`)
+    console.log(`Connected to the employee_db database.`)
    
 );
 
@@ -34,8 +31,7 @@ db.connect(function(err) {
     }
 })
 
-//need function to add employee
-// example sql command: INSERT INTO table1 (field1, field2) VALUES (value1, value2);
+// function to add new employee inputted from the user into the database
 const addEmp = () => {
     inquirer.prompt([
         {
@@ -62,6 +58,16 @@ const addEmp = () => {
     ])
     .then(answer => {
         console.log(answer)
+        console.log(answer.empfirstname)
+        console.log(answer.emplastname)
+        console.log(answer.emprole)
+        console.log(answer.empmanager)
+        db.query(`INSERT INTO employee (id, first_name, last_name, manager_id) VALUES (256, "${answer.empfirstname}", "${answer.emplastname}", 19)`, function(err, results) {
+            if (err) throw err;
+            console.log("Employee Added Successfully!")
+            console.log(results)
+            
+        })
         runQuest();
     })
 }
@@ -84,12 +90,18 @@ const updateEmpRole = () => {
         }
     ])
     .then(answer => {
-        console.log(answer)
+        db.query(`INSERT INTO employee (id, first_name, last_name, manager_id) VALUES (256, "${answer.empfirstname}", "${answer.emplastname}", 19)`, function(err, results) {
+            if (err) throw err;
+            console.log("Employee Added Successfully!")
+            console.log(results)
+            
+        })
         runQuest();
     })
 }
-//need function to add role
-// example sql command: INSERT INTO table1 (field1, field2) VALUES (value1, value2);
+
+
+// function to add new role inputted from the user into the database
 const addNewRole = () => {
     inquirer.prompt([
         {
@@ -110,12 +122,19 @@ const addNewRole = () => {
         }
     ])
     .then(answer => {
-        console.log(answer)
+        db.query(`INSERT INTO roles (id, title, salary) VALUES (5, "${answer.rolename}", "${answer.salary}")`, function(err, results) {
+            if (err) throw err;
+            console.log("Role Added Successfully!")
+            console.log(results)
+            
+        })
         runQuest();
     })
 }
-//need function to add department
-// example sql command: INSERT INTO table1 (field1, field2) VALUES (value1, value2);
+
+
+
+//function to add new department inputted from the user into the database
 const addDeptmnt = () => {
     inquirer.prompt([
         {
@@ -125,10 +144,17 @@ const addDeptmnt = () => {
         }
     ])
     .then(answer => {
-        console.log(answer)
+        db.query(`INSERT INTO department (id, department_name) VALUES (5, "${answer.dptmnt}")`, function(err, results) {
+            if (err) throw err;
+            console.log("Department Added Successfully!")
+            console.log(results)
+            
+        })
         runQuest();
     })
 }
+
+
 
 const runQuest = () => {
     inquirer.prompt([
