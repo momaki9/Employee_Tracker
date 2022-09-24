@@ -35,6 +35,7 @@ db.connect(function(err) {
 })
 
 //need function to add employee
+// example sql command: INSERT INTO table1 (field1, field2) VALUES (value1, value2);
 const addEmp = () => {
     inquirer.prompt([
         {
@@ -65,6 +66,8 @@ const addEmp = () => {
     })
 }
 //need function to update employee role
+// example sql command: UPDATE table1 SET field1=new_value1 WHERE condition;
+// OR: UPDATE table1, table2 SET field1=new_value1, field2=new_value2, ... WHERE table1.id1 = table2.id2 AND condition;
 const updateEmpRole = () => {
     inquirer.prompt([
         {
@@ -86,6 +89,7 @@ const updateEmpRole = () => {
     })
 }
 //need function to add role
+// example sql command: INSERT INTO table1 (field1, field2) VALUES (value1, value2);
 const addNewRole = () => {
     inquirer.prompt([
         {
@@ -111,6 +115,7 @@ const addNewRole = () => {
     })
 }
 //need function to add department
+// example sql command: INSERT INTO table1 (field1, field2) VALUES (value1, value2);
 const addDeptmnt = () => {
     inquirer.prompt([
         {
