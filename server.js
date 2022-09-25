@@ -57,7 +57,8 @@ const addEmp = () => {
                 const rolesArray = results.map(function (obj) {
                 return obj.title;
                 })
-                return rolesArray
+                const filteredArray = rolesArray.filter((cat, i) => rolesArray.indexOf(cat) === i)
+                return filteredArray
             }
         },
         {
@@ -67,7 +68,10 @@ const addEmp = () => {
             choices: function () {
                 const managerArray = results.map(function (obj) {
                     return obj.full_name;
+                    
                 })
+                const noManager = "None";
+                managerArray.push(noManager)
                 return managerArray
             }
         }
@@ -77,11 +81,28 @@ const addEmp = () => {
         console.log(answer.emplastname) // retunrs last name string -- should work
         console.log(answer.emprole) // returns role name string -- works fine
         console.log(answer.empmanager) // returns full name string
+       if (answer.empmanager === "None") {
         db.query(`SELECT id FROM roles WHERE title = "${answer.emprole}"`, function(err, roleId) {
             if (err) throw err;
             const rolArray = roleId.map(function (obj) {
                 return obj.id;
             })
+            db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.empfirstname}", "${answer.emplastname}", ${rolArray}, null)`, function(err, results) {
+                if (err) throw err;
+                runQuest();
+            console.log("THE BOSS HAS BEEN Added Successfully!")
+            })
+            
+            
+        })
+        
+       } else {
+        db.query(`SELECT id FROM roles WHERE title = "${answer.emprole}"`, function(err, roleId) {
+            if (err) throw err;
+            const rolArray = roleId.map(function (obj) {
+                return obj.id;
+            })
+       
         db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.empmanager}"`, function (err, managerId) {
             if (err) throw err;
             const manId = managerId.map(function (obj) {
@@ -97,9 +118,12 @@ const addEmp = () => {
     })
 })
         runQuest();
-    })
-})
-}
+       }
+    });
+
+    
+    } )};
+
 //need function to update employee role
 // example sql command: UPDATE table1 SET field1=new_value1 WHERE condition;
 // OR: UPDATE table1, table2 SET field1=new_value1, field2=new_value2, ... WHERE table1.id1 = table2.id2 AND condition;
@@ -132,18 +156,33 @@ const updateEmpRole = () => {
                     //might need a filter method to remove duplicates
                     return obj.title;
                 })
-                return roleArray
+                const filteredArray = roleArray.filter((cat, i) => roleArray.indexOf(cat) === i)
+                return filteredArray
             }
         }
     ])
+    //SELECT roles.title, roles.id AS roles_id, CONCAT(first_name, " ", last_name) AS full_name, employee.id AS employee_id FROM employee JOIN roles on employee.role_id = roles.id
     .then(answer => {
-        db.query(`INSERT INTO employee (first_name, last_name, manager_id) VALUES ("${answer.empfirstname}", "${answer.emplastname}", 19)`, function(err, results) {
+        db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.employee}"`, function(err, data) {
             if (err) throw err;
-            console.log("Employee Added Successfully!")
+            const employeeId = data.map(function (obj) {
+                return obj.id
+            })
+        db.query(`SELECT id FROM roles WHERE title = "${answer.role}"`, function(err, data) {
+
+            const updatedRole = data.map(function (obj) {
+                return obj.id
+            })
+        
+        db.query(`UPDATE employee SET role_id = ${employeeId} WHERE id = ${updatedRole}`, function(err, results) {
+            if (err) throw err;
+            console.log("Employee's Role Has Been Successfully Updated!")
             console.log(results)
             
         })
+    })
         runQuest();
+    })    
     })
 })      
 }
@@ -176,7 +215,13 @@ const addNewRole = () => {
         }
     ])
     .then(answer => {
-        db.query(`INSERT INTO roles (title, salary) VALUES ("${answer.rolename}", "${answer.salary}")`, function(err, results) {
+        db.query(`SELECT id FROM department WHERE department_name = "${answer.roledeptmnt}"`, function (err, deptId) {
+            if (err) throw err;
+            const deptRole = deptId.map(function (obj) {
+                return obj.id
+            })
+        
+        db.query(`INSERT INTO roles (title, salary, department_id) VALUES ("${answer.rolename}", "${answer.salary}", ${deptRole})`, function(err, results) {
             if (err) throw err;
             console.log("Role Added Successfully!")
             console.log(results)
@@ -184,6 +229,7 @@ const addNewRole = () => {
         })
         runQuest();
     })
+})
 })
 }
 
@@ -252,7 +298,7 @@ const runQuest = () => {
             runQuest();
         }
         if (answer.directory === "View all roles") {
-            db.query('SELECT roles.id, roles.title, department.department_name AS department, roles.salary FROM roles JOIN department on roles.id = department.id', function(err, results) {
+            db.query('SELECT roles.id, roles.title, department.department_name AS department, roles.salary FROM roles JOIN department on roles.department_id = department.id', function(err, results) {
                 console.log("\n")
                 console.table(results)
                 console.log("ALL ROLES")
