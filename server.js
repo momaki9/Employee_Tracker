@@ -31,8 +31,13 @@ db.connect(function(err) {
     }
 })
 
+// ["QC Chemist", "Item Programmer", "Software Engineer", "Content Writer"]
 // function to add new employee inputted from the user into the database
+// SELECT roles.title, CONCAT(first_name, ' ', last_name) AS full_name FROM employee JOIN roles ON roles.id = employee.id;
+// previous code: SELECT title FROM roles
 const addEmp = () => {
+    db.query('SELECT roles.title, CONCAT(employee.first_name, " ", employee.last_name) AS full_name FROM employee JOIN roles ON roles.id = employee.role_id', function(err, results) {
+        if (err) throw err;
     inquirer.prompt([
         {
             type: "input",
@@ -48,49 +53,91 @@ const addEmp = () => {
             type: "list",
             name: "emprole",
             message: "What is the employee's role",
-            choices: ["QC Chemist", "Item Programmer", "Software Engineer", "Content Writer"]
+            choices:  function () {
+                const rolesArray = results.map(function (obj) {
+                return obj.title;
+                })
+                return rolesArray
+            }
         },
         {
-            type: "input",
+            type: "list",
             name: "empmanager",
-            message: "Who is the employee's manager?"
+            message: "Who is the employee's manager?",
+            choices: function () {
+                const managerArray = results.map(function (obj) {
+                    return obj.full_name;
+                })
+                return managerArray
+            }
         }
     ])
     .then(answer => {
-        console.log(answer)
-        console.log(answer.empfirstname)
-        console.log(answer.emplastname)
-        console.log(answer.emprole)
-        console.log(answer.empmanager)
-        db.query(`INSERT INTO employee (id, first_name, last_name, manager_id) VALUES (256, "${answer.empfirstname}", "${answer.emplastname}", 19)`, function(err, results) {
+        console.log(answer.empfirstname) // retunrs first name string -- should work
+        console.log(answer.emplastname) // retunrs last name string -- should work
+        console.log(answer.emprole) // returns role name string -- works fine
+        console.log(answer.empmanager) // returns full name string
+        db.query(`SELECT id FROM roles WHERE title = "${answer.emprole}"`, function(err, roleId) {
             if (err) throw err;
-            console.log("Employee Added Successfully!")
-            console.log(results)
+            const rolArray = roleId.map(function (obj) {
+                return obj.id;
+            })
+        db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.empmanager}"`, function (err, managerId) {
+            if (err) throw err;
+            const manId = managerId.map(function (obj) {
+                return obj.id;          
+        })    
             
+            console.log(`this is the role id: ${rolArray}`)
+        
+        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.empfirstname}", "${answer.emplastname}", ${rolArray}, ${manId} )`, function(err, results) {
+            if (err) throw err;
+            console.log("Employee Added Successfully!")   
         })
+    })
+})
         runQuest();
     })
+})
 }
 //need function to update employee role
 // example sql command: UPDATE table1 SET field1=new_value1 WHERE condition;
 // OR: UPDATE table1, table2 SET field1=new_value1, field2=new_value2, ... WHERE table1.id1 = table2.id2 AND condition;
+// ["Chris Grayce", "Casey Prolux", "Jurgin Galicia", "Mostafa Maki", "Christopher Lee", "John Chester"]
+// ["QC Chemist", "Item Programmer", "Software Engineer", "Content Writer"]
+//SELECT title FROM roles; SELECT CONCAT(first_name, " ", last_name) AS full_name FROM employee
 const updateEmpRole = () => {
+    db.query('SELECT roles.title, CONCAT(first_name, " ", last_name) AS full_name FROM employee JOIN roles on employee.role_id = roles.id', function(err, results) {
+        if (err) throw err;
+    
     inquirer.prompt([
         {
             type: "list",
             name: "employee",
             message: "Which employee's role do you want to update?",
-            choices: ["Chris Grayce", "Casey Prolux", "Jurgin Galicia", "Mostafa Maki", "Christopher Lee", "John Chester"]
+            choices: function () {
+                const employeeArray = results.map(function (obj) {
+                    //might need a filter method to remove duplicates
+                    return obj.full_name;
+                })
+                return employeeArray
+            }
         },
         {
             type: "list",
             name: "role",
             message: "Which role do you want to assign the selected employee?",
-            choices: ["QC Chemist", "Item Programmer", "Software Engineer", "Content Writer"]
+            choices: function () {
+                const roleArray = results.map(function (obj) {
+                    //might need a filter method to remove duplicates
+                    return obj.title;
+                })
+                return roleArray
+            }
         }
     ])
     .then(answer => {
-        db.query(`INSERT INTO employee (id, first_name, last_name, manager_id) VALUES (256, "${answer.empfirstname}", "${answer.emplastname}", 19)`, function(err, results) {
+        db.query(`INSERT INTO employee (first_name, last_name, manager_id) VALUES ("${answer.empfirstname}", "${answer.emplastname}", 19)`, function(err, results) {
             if (err) throw err;
             console.log("Employee Added Successfully!")
             console.log(results)
@@ -98,11 +145,13 @@ const updateEmpRole = () => {
         })
         runQuest();
     })
+})      
 }
-
-
+//["Content", "ChemQC", "PRG", "SofEng"]
 // function to add new role inputted from the user into the database
 const addNewRole = () => {
+    db.query('SELECT department_name FROM department', function(err, results) {
+        if (err) throw err;
     inquirer.prompt([
         {
             type: "input",
@@ -118,11 +167,16 @@ const addNewRole = () => {
             type: "list",
             name: "roledeptmnt",
             message: "Which department does the role belong to",
-            choices: ["Content", "ChemQC", "PRG", "SofEng"]
+            choices: function () {
+                const deptArray = results.map(function (obj) {
+                    return obj.department_name;
+                    })
+                    return deptArray
+            }
         }
     ])
     .then(answer => {
-        db.query(`INSERT INTO roles (id, title, salary) VALUES (5, "${answer.rolename}", "${answer.salary}")`, function(err, results) {
+        db.query(`INSERT INTO roles (title, salary) VALUES ("${answer.rolename}", "${answer.salary}")`, function(err, results) {
             if (err) throw err;
             console.log("Role Added Successfully!")
             console.log(results)
@@ -130,9 +184,8 @@ const addNewRole = () => {
         })
         runQuest();
     })
+})
 }
-
-
 
 //function to add new department inputted from the user into the database
 const addDeptmnt = () => {
@@ -144,11 +197,9 @@ const addDeptmnt = () => {
         }
     ])
     .then(answer => {
-        db.query(`INSERT INTO department (id, department_name) VALUES (5, "${answer.dptmnt}")`, function(err, results) {
+        db.query(`INSERT INTO department (department_name) VALUES ("${answer.dptmnt}")`, function(err, results) {
             if (err) throw err;
-            console.log("Department Added Successfully!")
-            console.log(results)
-            
+            console.log("Department Added Successfully!")           
         })
         runQuest();
     })
@@ -169,7 +220,6 @@ const runQuest = () => {
         console.log(`The user selected ${answer.directory}`)
         
         if (answer.directory === "Exit") {
-            console.log("He wants to exit")
             return;
         }
         if (answer.directory === "Add Employee") {
@@ -185,21 +235,25 @@ const runQuest = () => {
             addDeptmnt();
         }
         if (answer.directory === "View all departments") {
-            db.query('SELECT * FROM roles JOIN department ON roles.id = department.id', function(err, results) {
+            db.query('SELECT id, department_name AS department FROM department', function(err, results) {
+                console.log("\n")
                 console.table(results)
                 console.log("ALL DEPT")
             })
             runQuest();
+            
         }
         if (answer.directory === "View all employees") {
-            db.query('SELECT * FROM employee JOIN roles ON employee.roles_id = roles.id', function(err, results) {
+            db.query('SELECT employee.id, employee.first_name AS first, employee.last_name AS last, roles.title, department.department_name AS department, roles.salary, CONCAT(e.first_name, " ", e.last_name) AS manager FROM employee INNER JOIN roles on employee.role_id = roles.id INNER JOIN department on roles.department_id = department.id LEFT JOIN employee e on e.id = employee.manager_id', function(err, results) {
+                console.log("\n")
                 console.table(results)
                 console.log("ALL EMP")
             })
             runQuest();
         }
         if (answer.directory === "View all roles") {
-            db.query('SELECT * FROM roles', function(err, results) {
+            db.query('SELECT roles.id, roles.title, department.department_name AS department, roles.salary FROM roles JOIN department on roles.id = department.id', function(err, results) {
+                console.log("\n")
                 console.table(results)
                 console.log("ALL ROLES")
             })
@@ -208,13 +262,6 @@ const runQuest = () => {
         
     })
 }
-
-// Query database
-// db.query('SELECT * FROM students', function (err, results) {
-//     //or here
-//     console.log(results);
-    
-// });
 
 // Default response for any other request (Not Found)
 app.use((req, res) => {
