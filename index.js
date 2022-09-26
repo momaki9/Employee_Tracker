@@ -1,18 +1,9 @@
-const express = require('express');
+// Requiring the inquirer, mySQL2 and console.table packages for the app
 const inquirer = require('inquirer');
-
-// Import and require mysql2
 const mysql = require('mysql2');
-const cTable = require('console.table');
-const PORT = process.env.PORT || 3001;
-const app = express();
+require('console.table');
 
-// Express middleware
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-
-// see folder 11 
-// Connect to database
+// Creates a connection to the mySQL database
 const db = mysql.createConnection(
     {
       host: 'localhost',
@@ -20,22 +11,20 @@ const db = mysql.createConnection(
       password: 'R0JmN1mf3l',
       database: 'employee_db'
     },
-    console.log(`Connected to the employee_db database.`)
+    console.log(`Welcome! You are Now Connected to the employee_db DataBase!`)
    
 );
-
+// Once the application starts, run the prompt questions enclosed in the runQuest function
 db.connect(function(err) {
     if (err) throw err;
     else {
         runQuest();
     }
-})
+});
 
-// ["QC Chemist", "Item Programmer", "Software Engineer", "Content Writer"]
 // function to add new employee inputted from the user into the database
-// SELECT roles.title, CONCAT(first_name, ' ', last_name) AS full_name FROM employee JOIN roles ON roles.id = employee.id;
-// previous code: SELECT title FROM roles
 const addEmp = () => {
+    console.clear();
     db.query('SELECT roles.title, CONCAT(employee.first_name, " ", employee.last_name) AS full_name FROM employee JOIN roles ON roles.id = employee.role_id', function(err, results) {
         if (err) throw err;
     inquirer.prompt([
@@ -77,10 +66,6 @@ const addEmp = () => {
         }
     ])
     .then(answer => {
-        console.log(answer.empfirstname) // retunrs first name string -- should work
-        console.log(answer.emplastname) // retunrs last name string -- should work
-        console.log(answer.emprole) // returns role name string -- works fine
-        console.log(answer.empmanager) // returns full name string
        if (answer.empmanager === "None") {
         db.query(`SELECT id FROM roles WHERE title = "${answer.emprole}"`, function(err, roleId) {
             if (err) throw err;
@@ -90,12 +75,8 @@ const addEmp = () => {
             db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.empfirstname}", "${answer.emplastname}", ${rolArray}, null)`, function(err, results) {
                 if (err) throw err;
                 runQuest();
-            console.log("THE BOSS HAS BEEN Added Successfully!")
-            })
-            
-            
+            }) 
         })
-        
        } else {
         db.query(`SELECT id FROM roles WHERE title = "${answer.emprole}"`, function(err, roleId) {
             if (err) throw err;
@@ -108,32 +89,19 @@ const addEmp = () => {
             const manId = managerId.map(function (obj) {
                 return obj.id;          
         })    
-            
-            console.log(`this is the role id: ${rolArray}`)
-        
         db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.empfirstname}", "${answer.emplastname}", ${rolArray}, ${manId} )`, function(err, results) {
             if (err) throw err;
-            console.log("Employee Added Successfully!")   
+            console.log("Employee Added Successfully!");  
+            runQuest(); 
         })
     })
-})
-        runQuest();
-       }
-    });
+})}
+});})};
 
-    
-    } )};
-
-//need function to update employee role
-// example sql command: UPDATE table1 SET field1=new_value1 WHERE condition;
-// OR: UPDATE table1, table2 SET field1=new_value1, field2=new_value2, ... WHERE table1.id1 = table2.id2 AND condition;
-// ["Chris Grayce", "Casey Prolux", "Jurgin Galicia", "Mostafa Maki", "Christopher Lee", "John Chester"]
-// ["QC Chemist", "Item Programmer", "Software Engineer", "Content Writer"]
-//SELECT title FROM roles; SELECT CONCAT(first_name, " ", last_name) AS full_name FROM employee
+// function to update employee role in the database
 const updateEmpRole = () => {
     db.query('SELECT roles.title, CONCAT(first_name, " ", last_name) AS full_name FROM employee JOIN roles on employee.role_id = roles.id', function(err, results) {
         if (err) throw err;
-    
     inquirer.prompt([
         {
             type: "list",
@@ -144,8 +112,8 @@ const updateEmpRole = () => {
                     //might need a filter method to remove duplicates
                     return obj.full_name;
                 })
-                return employeeArray
-            }
+                return employeeArray;
+                }
         },
         {
             type: "list",
@@ -157,11 +125,9 @@ const updateEmpRole = () => {
                     return obj.title;
                 })
                 const filteredArray = roleArray.filter((cat, i) => roleArray.indexOf(cat) === i)
-                return filteredArray
+                return filteredArray;
             }
-        }
-    ])
-    //SELECT roles.title, roles.id AS roles_id, CONCAT(first_name, " ", last_name) AS full_name, employee.id AS employee_id FROM employee JOIN roles on employee.role_id = roles.id
+    }])
     .then(answer => {
         db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.employee}"`, function(err, data) {
             if (err) throw err;
@@ -177,16 +143,11 @@ const updateEmpRole = () => {
         db.query(`UPDATE employee SET role_id = ${employeeId} WHERE id = ${updatedRole}`, function(err, results) {
             if (err) throw err;
             console.log("Employee's Role Has Been Successfully Updated!")
-            console.log(results)
-            
+            runQuest();
         })
-    })
-        runQuest();
-    })    
-    })
-})      
-}
-//["Content", "ChemQC", "PRG", "SofEng"]
+    })})})
+})}
+
 // function to add new role inputted from the user into the database
 const addNewRole = () => {
     db.query('SELECT department_name FROM department', function(err, results) {
@@ -210,7 +171,7 @@ const addNewRole = () => {
                 const deptArray = results.map(function (obj) {
                     return obj.department_name;
                     })
-                    return deptArray
+                    return deptArray;
             }
         }
     ])
@@ -224,14 +185,11 @@ const addNewRole = () => {
         db.query(`INSERT INTO roles (title, salary, department_id) VALUES ("${answer.rolename}", "${answer.salary}", ${deptRole})`, function(err, results) {
             if (err) throw err;
             console.log("Role Added Successfully!")
-            console.log(results)
-            
+            runQuest();
         })
-        runQuest();
     })
 })
-})
-}
+})}
 
 //function to add new department inputted from the user into the database
 const addDeptmnt = () => {
@@ -249,10 +207,8 @@ const addDeptmnt = () => {
         })
         runQuest();
     })
-}
-
-
-
+};
+// Main function to run the start up prompt questions
 const runQuest = () => {
     inquirer.prompt([
         {
@@ -263,8 +219,6 @@ const runQuest = () => {
         }
     ])
     .then(answer => {
-        console.log(`The user selected ${answer.directory}`)
-        
         if (answer.directory === "Exit") {
             return;
         }
@@ -284,37 +238,25 @@ const runQuest = () => {
             db.query('SELECT id, department_name AS department FROM department', function(err, results) {
                 console.log("\n")
                 console.table(results)
-                console.log("ALL DEPT")
+                console.log("\n")
+                runQuest();
             })
-            runQuest();
-            
         }
         if (answer.directory === "View all employees") {
             db.query('SELECT employee.id, employee.first_name AS first, employee.last_name AS last, roles.title, department.department_name AS department, roles.salary, CONCAT(e.first_name, " ", e.last_name) AS manager FROM employee INNER JOIN roles on employee.role_id = roles.id INNER JOIN department on roles.department_id = department.id LEFT JOIN employee e on e.id = employee.manager_id', function(err, results) {
                 console.log("\n")
                 console.table(results)
-                console.log("ALL EMP")
+                console.log("\n")
+                runQuest();
             })
-            runQuest();
         }
         if (answer.directory === "View all roles") {
             db.query('SELECT roles.id, roles.title, department.department_name AS department, roles.salary FROM roles JOIN department on roles.department_id = department.id', function(err, results) {
                 console.log("\n")
                 console.table(results)
-                console.log("ALL ROLES")
-            })
-            runQuest();
+                console.log("\n")
+                runQuest();
+            }) 
         }
-        
     })
 }
-
-// Default response for any other request (Not Found)
-app.use((req, res) => {
-    res.status(404).end();
-});
-
-
-app.listen(PORT, () => {
-    console.log(`Server is Live at ${PORT}`);
-});
