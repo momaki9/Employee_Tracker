@@ -8,6 +8,7 @@ const db = mysql.createConnection(
     {
       host: 'localhost',
       user: 'root',
+      // your own mySQL password here
       password: 'R0JmN1mf3l',
       database: 'employee_db'
     },
@@ -25,8 +26,9 @@ db.connect(function(err) {
 // function to add new employee inputted from the user into the database
 const addEmp = () => {
     console.clear();
-    db.query('SELECT roles.title, CONCAT(employee.first_name, " ", employee.last_name) AS full_name FROM employee JOIN roles ON roles.id = employee.role_id', function(err, results) {
+    db.query('SELECT * FROM roles', function(err, results) {
         if (err) throw err;
+        db.query("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM employee", function(err, data) {
     inquirer.prompt([
         {
             type: "input",
@@ -55,7 +57,7 @@ const addEmp = () => {
             name: "empmanager",
             message: "Who is the employee's manager?",
             choices: function () {
-                const managerArray = results.map(function (obj) {
+                const managerArray = data.map(function (obj) {
                     return obj.full_name;
                     
                 })
@@ -74,6 +76,7 @@ const addEmp = () => {
             })
             db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answer.empfirstname}", "${answer.emplastname}", ${rolArray}, null)`, function(err, results) {
                 if (err) throw err;
+                console.log("Success!!")
                 runQuest();
             }) 
         })
@@ -96,12 +99,13 @@ const addEmp = () => {
         })
     })
 })}
-});})};
+});})})};
 
 // function to update employee role in the database
 const updateEmpRole = () => {
-    db.query('SELECT roles.title, CONCAT(first_name, " ", last_name) AS full_name FROM employee JOIN roles on employee.role_id = roles.id', function(err, results) {
+    db.query('SELECT CONCAT(first_name, " ", last_name) AS full_name FROM employee', function(err, results) {
         if (err) throw err;
+        db.query("SELECT * FROM roles", function(err, data) {
     inquirer.prompt([
         {
             type: "list",
@@ -109,7 +113,6 @@ const updateEmpRole = () => {
             message: "Which employee's role do you want to update?",
             choices: function () {
                 const employeeArray = results.map(function (obj) {
-                    //might need a filter method to remove duplicates
                     return obj.full_name;
                 })
                 return employeeArray;
@@ -120,7 +123,7 @@ const updateEmpRole = () => {
             name: "role",
             message: "Which role do you want to assign the selected employee?",
             choices: function () {
-                const roleArray = results.map(function (obj) {
+                const roleArray = data.map(function (obj) {
                     //might need a filter method to remove duplicates
                     return obj.title;
                 })
@@ -140,13 +143,13 @@ const updateEmpRole = () => {
                 return obj.id
             })
         
-        db.query(`UPDATE employee SET role_id = ${employeeId} WHERE id = ${updatedRole}`, function(err, results) {
+        db.query(`UPDATE employee SET role_id = ${updatedRole} WHERE id = ${employeeId}`, function(err, results) {
             if (err) throw err;
             console.log("Employee's Role Has Been Successfully Updated!")
             runQuest();
         })
     })})})
-})}
+})})}
 
 // function to add new role inputted from the user into the database
 const addNewRole = () => {
@@ -184,7 +187,7 @@ const addNewRole = () => {
         
         db.query(`INSERT INTO roles (title, salary, department_id) VALUES ("${answer.rolename}", "${answer.salary}", ${deptRole})`, function(err, results) {
             if (err) throw err;
-            console.log("Role Added Successfully!")
+            console.log("Role Added Successfully!");
             runQuest();
         })
     })
@@ -205,6 +208,7 @@ const addDeptmnt = () => {
             if (err) throw err;
             console.log("Department Added Successfully!")           
         })
+        console.log("Department Added!")
         runQuest();
     })
 };
